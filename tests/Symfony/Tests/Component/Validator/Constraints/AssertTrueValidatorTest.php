@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\True;
 use Symfony\Component\Validator\Constraints\TrueValidator;
@@ -21,6 +21,11 @@ class TrueValidatorTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->validator = new TrueValidator();
+    }
+
+    protected function tearDown()
+    {
+        $this->validator = null;
     }
 
     public function testNullIsValid()

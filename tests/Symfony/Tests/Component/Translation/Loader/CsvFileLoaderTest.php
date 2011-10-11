@@ -37,4 +37,24 @@ class CsvFileLoaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('en', $catalogue->getLocale());
         $this->assertEquals(array(new FileResource($resource)), $catalogue->getResources());
     }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testLoadThrowsAnExceptionIfFileNotExists()
+    {
+        $loader = new CsvFileLoader();
+        $resource = __DIR__.'/../fixtures/not-exists.csv';
+        $loader->load($resource, 'en', 'domain1');
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testLoadThrowsAnExceptionIfFileNotLocal()
+    {
+        $loader = new CsvFileLoader();
+        $resource = 'http://example.com/resources.csv';
+        $loader->load($resource, 'en', 'domain1');
+    }
 }

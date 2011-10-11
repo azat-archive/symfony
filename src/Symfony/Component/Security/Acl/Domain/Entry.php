@@ -35,14 +35,14 @@ class Entry implements AuditableEntryInterface
     /**
      * Constructor
      *
-     * @param integer $id
-     * @param AclInterface $acl
+     * @param integer                   $id
+     * @param AclInterface              $acl
      * @param SecurityIdentityInterface $sid
-     * @param string $strategy
-     * @param integer $mask
-     * @param Boolean $granting
-     * @param Boolean $auditFailure
-     * @param Boolean $auditSuccess
+     * @param string                    $strategy
+     * @param integer                   $mask
+     * @param Boolean                   $granting
+     * @param Boolean                   $auditFailure
+     * @param Boolean                   $auditSuccess
      */
     public function __construct($id, AclInterface $acl, SecurityIdentityInterface $sid, $strategy, $mask, $granting, $auditFailure, $auditSuccess)
     {
@@ -127,7 +127,6 @@ class Entry implements AuditableEntryInterface
      * AclInterface instead.
      *
      * @param Boolean $boolean
-     * @return void
      */
     public function setAuditFailure($boolean)
     {
@@ -141,7 +140,6 @@ class Entry implements AuditableEntryInterface
      * AclInterface instead.
      *
      * @param Boolean $boolean
-     * @return void
      */
     public function setAuditSuccess($boolean)
     {
@@ -155,7 +153,6 @@ class Entry implements AuditableEntryInterface
      * AclInterface instead.
      *
      * @param integer $mask
-     * @return void
      */
     public function setMask($mask)
     {
@@ -169,7 +166,6 @@ class Entry implements AuditableEntryInterface
      * AclInterface instead.
      *
      * @param string $strategy
-     * @return void
      */
     public function setStrategy($strategy)
     {
@@ -198,7 +194,6 @@ class Entry implements AuditableEntryInterface
      * Implementation of \Serializable
      *
      * @param string $serialized
-     * @return void
      */
     public function unserialize($serialized)
     {

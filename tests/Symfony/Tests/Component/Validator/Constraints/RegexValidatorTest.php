@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\RegexValidator;
@@ -21,6 +21,11 @@ class RegexValidatorTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->validator = new RegexValidator();
+    }
+
+    protected function tearDown()
+    {
+        $this->validator = null;
     }
 
     public function testNullIsValid()
@@ -88,5 +93,14 @@ class RegexValidatorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->validator->getMessageParameters(), array(
             '{{ value }}' => 'foobar',
         ));
+    }
+
+    public function testConstraintGetDefaultOption()
+    {
+        $constraint = new Regex(array(
+            'pattern' => '/^[0-9]+$/',
+        ));
+
+        $this->assertEquals('pattern', $constraint->getDefaultOption());
     }
 }

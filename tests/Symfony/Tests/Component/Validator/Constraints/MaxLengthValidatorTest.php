@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\MaxLength;
 use Symfony\Component\Validator\Constraints\MaxLengthValidator;
@@ -21,6 +21,11 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->validator = new MaxLengthValidator();
+    }
+
+    protected function tearDown()
+    {
+        $this->validator = null;
     }
 
     public function testNullIsValid()
@@ -95,5 +100,14 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
             '{{ value }}' => '123456',
             '{{ limit }}' => 5,
         ));
+    }
+
+    public function testConstraintGetDefaultOption()
+    {
+        $constraint = new MaxLength(array(
+            'limit' => 5,
+        ));
+
+        $this->assertEquals('limit', $constraint->getDefaultOption());
     }
 }

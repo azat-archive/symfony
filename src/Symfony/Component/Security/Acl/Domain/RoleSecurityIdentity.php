@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\Role\Role;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class RoleSecurityIdentity implements SecurityIdentityInterface
+final class RoleSecurityIdentity implements SecurityIdentityInterface
 {
     private $role;
 
@@ -27,7 +27,6 @@ class RoleSecurityIdentity implements SecurityIdentityInterface
      * Constructor
      *
      * @param mixed $role a Role instance, or its string representation
-     * @return void
      */
     public function __construct($role)
     {

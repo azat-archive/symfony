@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\Min;
 use Symfony\Component\Validator\Constraints\MinValidator;
@@ -26,13 +26,6 @@ class MinValidatorTest extends \PHPUnit_Framework_TestCase
     public function testNullIsValid()
     {
         $this->assertTrue($this->validator->isValid(null, new Min(array('limit' => 10))));
-    }
-
-    public function testExpectsNumericType()
-    {
-        $this->setExpectedException('Symfony\Component\Validator\Exception\UnexpectedTypeException');
-
-        $this->validator->isValid(new \stdClass(), new Min(array('limit' => 10)));
     }
 
     /**
@@ -68,6 +61,7 @@ class MinValidatorTest extends \PHPUnit_Framework_TestCase
         return array(
             array(9.999999),
             array('9.999999'),
+            array(new \stdClass()),
         );
     }
 
@@ -84,5 +78,14 @@ class MinValidatorTest extends \PHPUnit_Framework_TestCase
             '{{ value }}' => 9,
             '{{ limit }}' => 10,
         ));
+    }
+
+    public function testConstraintGetDefaultOption()
+    {
+        $constraint = new Min(array(
+            'limit' => 10,
+        ));
+
+        $this->assertEquals('limit', $constraint->getDefaultOption());
     }
 }

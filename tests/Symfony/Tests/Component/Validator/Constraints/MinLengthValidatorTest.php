@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\MinLength;
 use Symfony\Component\Validator\Constraints\MinLengthValidator;
@@ -21,6 +21,11 @@ class MinLengthValidatorTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->validator = new MinLengthValidator();
+    }
+
+    protected function tearDown()
+    {
+        $this->validator = null;
     }
 
     public function testNullIsValid()
@@ -89,11 +94,20 @@ class MinLengthValidatorTest extends \PHPUnit_Framework_TestCase
             'message' => 'myMessage'
             ));
 
-            $this->assertFalse($this->validator->isValid('1234', $constraint));
-            $this->assertEquals($this->validator->getMessageTemplate(), 'myMessage');
-            $this->assertEquals($this->validator->getMessageParameters(), array(
+        $this->assertFalse($this->validator->isValid('1234', $constraint));
+        $this->assertEquals($this->validator->getMessageTemplate(), 'myMessage');
+        $this->assertEquals($this->validator->getMessageParameters(), array(
             '{{ value }}' => '1234',
             '{{ limit }}' => 5,
-            ));
+        ));
+    }
+
+    public function testConstraintGetDefaultOption()
+    {
+        $constraint = new MinLength(array(
+            'limit' => 5,
+        ));
+
+        $this->assertEquals('limit', $constraint->getDefaultOption());
     }
 }

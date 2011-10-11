@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\DomCrawler;
 
-use Symfony\Component\CssSelector\Parser as CssParser;
+use Symfony\Component\CssSelector\CssSelector;
 
 /**
  * Crawler eases navigation of a list of \DOMNode objects.
@@ -23,31 +23,20 @@ use Symfony\Component\CssSelector\Parser as CssParser;
 class Crawler extends \SplObjectStorage
 {
     private $uri;
-    private $host;
-    private $path;
-    private $base;
 
     /**
      * Constructor.
      *
      * @param mixed  $node A Node to use as the base for the crawling
-     * @param string $uri  The base URI to use for absolute links or form actions
-     * @param string $base An optional base href for generating the uris for Form and Link.
-     *                     This will be autodetected if $node has a <base> tag.
+     * @param string $uri  The current URI or the base href value
      *
      * @api
      */
-    public function __construct($node = null, $uri = null, $base = null)
+    public function __construct($node = null, $uri = null)
     {
         $this->uri = $uri;
 
-        list($this->host, $this->path) = $this->parseUri($this->uri);
-
         $this->add($node);
-
-        if ($base) {
-            $this->base = $base;
-        }
     }
 
     /**
@@ -103,6 +92,9 @@ class Crawler extends \SplObjectStorage
         $charset = 'ISO-8859-1';
         if (false !== $pos = strpos($type, 'charset=')) {
             $charset = substr($type, $pos + 8);
+            if (false !== $pos = strpos($charset, ';')) {
+                $charset = substr($charset, 0, $pos);
+            }
         }
 
         if ('x' === $matches[1]) {
@@ -115,6 +107,13 @@ class Crawler extends \SplObjectStorage
     /**
      * Adds an HTML content to the list of nodes.
      *
+     * The libxml errors are disabled when the content is parsed.
+     *
+     * If you want to get parsing errors, be sure to enable
+     * internal errors via libxml_use_internal_errors(true)
+     * and then, get the errors via libxml_get_errors(). Be
+     * sure to clear errors with libxml_clear_errors() afterward.
+     *
      * @param string $content The HTML content
      * @param string $charset The charset
      *
@@ -125,18 +124,28 @@ class Crawler extends \SplObjectStorage
         $dom = new \DOMDocument('1.0', $charset);
         $dom->validateOnParse = true;
 
+        $current = libxml_use_internal_errors(true);
         @$dom->loadHTML($content);
+        libxml_use_internal_errors($current);
+
         $this->addDocument($dom);
 
         $base = $this->filter('base')->extract(array('href'));
 
         if (count($base)) {
-            $this->base = current($base);
+            $this->uri = current($base);
         }
     }
 
     /**
      * Adds an XML content to the list of nodes.
+     *
+     * The libxml errors are disabled when the content is parsed.
+     *
+     * If you want to get parsing errors, be sure to enable
+     * internal errors via libxml_use_internal_errors(true)
+     * and then, get the errors via libxml_get_errors(). Be
+     * sure to clear errors with libxml_clear_errors() afterward.
      *
      * @param string $content The XML content
      * @param string $charset The charset
@@ -149,7 +158,10 @@ class Crawler extends \SplObjectStorage
         $dom->validateOnParse = true;
 
         // remove the default namespace to make XPath expressions simpler
+        $current = libxml_use_internal_errors(true);
         @$dom->loadXML(str_replace('xmlns', 'ns', $content));
+        libxml_use_internal_errors($current);
+
         $this->addDocument($dom);
     }
 
@@ -458,9 +470,7 @@ class Crawler extends \SplObjectStorage
      */
     public function extract($attributes)
     {
-        if (!is_array($attributes)) {
-            $attributes = array($attributes);
-        }
+        $attributes = (array) $attributes;
 
         $data = array();
         foreach ($this as $node) {
@@ -498,7 +508,7 @@ class Crawler extends \SplObjectStorage
 
         $domxpath = new \DOMXPath($document);
 
-        return new static($domxpath->query($xpath), $this->uri, $this->base);
+        return new static($domxpath->query($xpath), $this->uri);
     }
 
     /**
@@ -516,13 +526,13 @@ class Crawler extends \SplObjectStorage
      */
     public function filter($selector)
     {
-        if (!class_exists('Symfony\\Component\\CssSelector\\Parser')) {
+        if (!class_exists('Symfony\\Component\\CssSelector\\CssSelector')) {
             // @codeCoverageIgnoreStart
             throw new \RuntimeException('Unable to filter with a CSS selector as the Symfony CssSelector is not installed (you can use filterXPath instead).');
             // @codeCoverageIgnoreEnd
         }
 
-        return $this->filterXPath(CssParser::cssToXpath($selector));
+        return $this->filterXPath(CssSelector::toXPath($selector));
     }
 
     /**
@@ -579,7 +589,7 @@ class Crawler extends \SplObjectStorage
 
         $node = $this->getNode(0);
 
-        return new Link($node, $method, $this->host, $this->path, $this->base);
+        return new Link($node, $this->uri, $method);
     }
 
     /**
@@ -593,7 +603,7 @@ class Crawler extends \SplObjectStorage
     {
         $links = array();
         foreach ($this as $node) {
-            $links[] = new Link($node, 'get', $this->host, $this->path);
+            $links[] = new Link($node, $this->uri, 'get');
         }
 
         return $links;
@@ -602,8 +612,8 @@ class Crawler extends \SplObjectStorage
     /**
      * Returns a Form object for the first node in the list.
      *
-     * @param  array  $arguments An array of values for the form fields
-     * @param  string $method    The method for the form
+     * @param  array  $values An array of values for the form fields
+     * @param  string $method The method for the form
      *
      * @return Form   A Form instance
      *
@@ -617,7 +627,7 @@ class Crawler extends \SplObjectStorage
             throw new \InvalidArgumentException('The current node list is empty.');
         }
 
-        $form = new Form($this->getNode(0), $method, $this->host, $this->path, $this->base);
+        $form = new Form($this->getNode(0), $this->uri, $method);
 
         if (null !== $values) {
             $form->setValues($values);
@@ -663,17 +673,6 @@ class Crawler extends \SplObjectStorage
 
         return null;
         // @codeCoverageIgnoreEnd
-    }
-
-    private function parseUri($uri)
-    {
-        if ('http' !== substr($uri, 0, 4)) {
-            return array(null, '/');
-        }
-
-        $path = parse_url($uri, PHP_URL_PATH);
-
-        return array(preg_replace('#^(.*?//[^/]+)\/.*$#', '$1', $uri), $path);
     }
 
     private function sibling($node, $siblingDir = 'nextSibling')

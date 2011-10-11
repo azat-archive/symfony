@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Symfony framework.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
 namespace Symfony\Tests\Component\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
@@ -57,7 +66,7 @@ class DefinitionDecoratorTest extends \PHPUnit_Framework_TestCase
         $def = new DefinitionDecorator('foo');
 
         $this->assertEquals(array(), $def->getArguments());
-        $this->assertSame($def, $def->setArgument(0, 'foo'));
+        $this->assertSame($def, $def->replaceArgument(0, 'foo'));
         $this->assertEquals(array('index_0' => 'foo'), $def->getArguments());
     }
 }

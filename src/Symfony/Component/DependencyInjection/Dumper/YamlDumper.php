@@ -20,6 +20,8 @@ use Symfony\Component\DependencyInjection\Reference;
  * YamlDumper dumps a service container as a YAML string.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @api
  */
 class YamlDumper extends Dumper
 {
@@ -29,32 +31,12 @@ class YamlDumper extends Dumper
      * @param  array  $options An array of options
      *
      * @return string A YAML string representing of the service container
+     *
+     * @api
      */
     public function dump(array $options = array())
     {
-        return $this->addParameters().$this->addInterfaceInjectors()."\n".$this->addServices();
-    }
-
-    /**
-     * Adds interface injectors
-     *
-     * @return string
-     */
-    private function addInterfaceInjectors()
-    {
-        if (!$this->container->getInterfaceInjectors()) {
-            return '';
-        }
-
-        $code = "\ninterfaces:\n";
-        foreach ($this->container->getInterfaceInjectors() as $injector) {
-            $code .= sprintf("    %s:\n", $injector->getClass());
-            if ($injector->getMethodCalls()) {
-                $code .= sprintf("        calls:\n          %s\n", str_replace("\n", "\n          ", Yaml::dump($this->dumpValue($injector->getMethodCalls()), 1)));
-            }
-        }
-
-        return $code;
+        return $this->addParameters()."\n".$this->addServices();
     }
 
     /**
@@ -66,9 +48,9 @@ class YamlDumper extends Dumper
      */
     private function addService($id, $definition)
     {
-        $code = "  $id:\n";
+        $code = "    $id:\n";
         if ($definition->getClass()) {
-            $code .= sprintf("    class: %s\n", $definition->getClass());
+            $code .= sprintf("        class: %s\n", $definition->getClass());
         }
 
         $tagsCode = '';
@@ -80,39 +62,39 @@ class YamlDumper extends Dumper
                 }
                 $att = $att ? ', '.implode(' ', $att) : '';
 
-                $tagsCode .= sprintf("      - { name: %s%s }\n", Yaml::dump($name), $att);
+                $tagsCode .= sprintf("            - { name: %s%s }\n", Yaml::dump($name), $att);
             }
         }
         if ($tagsCode) {
-            $code .= "    tags:\n".$tagsCode;
+            $code .= "        tags:\n".$tagsCode;
         }
 
         if ($definition->getFile()) {
-            $code .= sprintf("    file: %s\n", $definition->getFile());
+            $code .= sprintf("        file: %s\n", $definition->getFile());
         }
 
         if ($definition->getFactoryMethod()) {
-            $code .= sprintf("    factory_method: %s\n", $definition->getFactoryMethod());
+            $code .= sprintf("        factory_method: %s\n", $definition->getFactoryMethod());
         }
 
         if ($definition->getFactoryService()) {
-            $code .= sprintf("    factory_service: %s\n", $definition->getFactoryService());
+            $code .= sprintf("        factory_service: %s\n", $definition->getFactoryService());
         }
 
         if ($definition->getArguments()) {
-            $code .= sprintf("    arguments: %s\n", Yaml::dump($this->dumpValue($definition->getArguments()), 0));
+            $code .= sprintf("        arguments: %s\n", Yaml::dump($this->dumpValue($definition->getArguments()), 0));
         }
 
         if ($definition->getProperties()) {
-            $code .= sprintf("    properties: %s\n", Yaml::dump($this->dumpValue($definition->getProperties()), 0));
+            $code .= sprintf("        properties: %s\n", Yaml::dump($this->dumpValue($definition->getProperties()), 0));
         }
 
         if ($definition->getMethodCalls()) {
-            $code .= sprintf("    calls:\n      %s\n", str_replace("\n", "\n      ", Yaml::dump($this->dumpValue($definition->getMethodCalls()), 1)));
+            $code .= sprintf("        calls:\n            %s\n", str_replace("\n", "\n            ", Yaml::dump($this->dumpValue($definition->getMethodCalls()), 1)));
         }
 
         if (ContainerInterface::SCOPE_CONTAINER !== $scope = $definition->getScope()) {
-            $code .= sprintf("    scope: %s\n", $scope);
+            $code .= sprintf("        scope: %s\n", $scope);
         }
 
         if ($callable = $definition->getConfigurator()) {
@@ -124,7 +106,7 @@ class YamlDumper extends Dumper
                 }
             }
 
-            $code .= sprintf("    configurator: %s\n", Yaml::dump($callable, 0));
+            $code .= sprintf("        configurator: %s\n", Yaml::dump($callable, 0));
         }
 
         return $code;
@@ -135,14 +117,14 @@ class YamlDumper extends Dumper
      *
      * @param string $alias
      * @param string $id
-     * @return void
+     * @return string
      */
     private function addServiceAlias($alias, $id)
     {
         if ($id->isPublic()) {
-            return sprintf("  %s: @%s\n", $alias, $id);
+            return sprintf("    %s: @%s\n", $alias, $id);
         } else {
-            return sprintf("  %s:\n    alias: %s\n    public: false", $alias, $id);
+            return sprintf("    %s:\n        alias: %s\n        public: false", $alias, $id);
         }
     }
 
@@ -218,7 +200,7 @@ class YamlDumper extends Dumper
     /**
      * Gets the service call.
      *
-     * @param string $id
+     * @param string    $id
      * @param Reference $reference
      * @return string
      */

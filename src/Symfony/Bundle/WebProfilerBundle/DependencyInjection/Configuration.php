@@ -12,6 +12,7 @@
 namespace Symfony\Bundle\WebProfilerBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * This class contains the configuration information for the bundle
@@ -21,25 +22,33 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class Configuration
+class Configuration implements ConfigurationInterface
 {
     /**
-     * Generates the configuration tree.
+     * Generates the configuration tree builder.
      *
-     * @return \Symfony\Component\Config\Definition\ArrayNode The config tree
+     * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder The tree builder
      */
-    public function getConfigTree()
+    public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('web_profiler');
 
         $rootNode
             ->children()
+                ->booleanNode('verbose')->defaultTrue()->end()
                 ->booleanNode('toolbar')->defaultFalse()->end()
-                ->scalarNode('intercept_redirects')->defaultFalse()->end()
+                ->scalarNode('position')
+                    ->defaultValue('bottom')
+                    ->validate()
+                        ->ifNotInArray(array('bottom', 'top'))
+                        ->thenInvalid('The CSS position %s is not supported')
+                    ->end()
+                ->end()
+                ->booleanNode('intercept_redirects')->defaultFalse()->end()
             ->end()
         ;
 
-        return $treeBuilder->buildTree();
+        return $treeBuilder;
     }
 }

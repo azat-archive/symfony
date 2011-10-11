@@ -15,34 +15,37 @@ namespace Symfony\Component\Templating;
  * Internal representation of a template.
  *
  * @author Victor Berchet <victor@suumit.com>
+ *
+ * @api
  */
 class TemplateReference implements TemplateReferenceInterface
 {
     protected $parameters;
 
-    public function  __construct($name = null, $engine = null)
+    public function __construct($name = null, $engine = null)
     {
         $this->parameters = array(
-            'name'      => $name,
-            'engine'    => $engine,
+            'name'   => $name,
+            'engine' => $engine,
         );
     }
 
     public function __toString()
     {
-        return json_encode($this->parameters);
+        return $this->getLogicalName();
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function getSignature()
-    {
-        return md5(serialize($this->parameters));
-    }
-
-    /**
-     * {@inheritDoc}
+     * Sets a template parameter.
+     *
+     * @param string $name   The parameter name
+     * @param string $value  The parameter value
+     *
+     * @return TemplateReferenceInterface The TemplateReferenceInterface instance
+     *
+     * @throws  \InvalidArgumentException if the parameter is not defined
+     *
+     * @api
      */
     public function set($name, $value)
     {
@@ -56,7 +59,15 @@ class TemplateReference implements TemplateReferenceInterface
     }
 
     /**
-     * {@inheritDoc}
+     * Gets a template parameter.
+     *
+     * @param string $name The parameter name
+     *
+     * @return string The parameter value
+     *
+     * @throws  \InvalidArgumentException if the parameter is not defined
+     *
+     * @api
      */
     public function get($name)
     {
@@ -68,7 +79,11 @@ class TemplateReference implements TemplateReferenceInterface
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the template parameters.
+     *
+     * @return array An array of parameters
+     *
+     * @api
      */
     public function all()
     {
@@ -76,9 +91,29 @@ class TemplateReference implements TemplateReferenceInterface
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the path to the template.
+     *
+     * By default, it just returns the template name.
+     *
+     * @return string A path to the template or a resource
+     *
+     * @api
      */
     public function getPath()
+    {
+        return $this->parameters['name'];
+    }
+
+    /**
+     * Returns the "logical" template name.
+     *
+     * The template name acts as a unique identifier for the template.
+     *
+     * @return string The template name
+     *
+     * @api
+     */
+    public function getLogicalName()
     {
         return $this->parameters['name'];
     }

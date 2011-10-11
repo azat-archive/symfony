@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\DateTime;
 use Symfony\Component\Validator\Constraints\DateTimeValidator;
@@ -23,6 +23,11 @@ class DateTimeValidatorTest extends \PHPUnit_Framework_TestCase
         $this->validator = new DateTimeValidator();
     }
 
+    protected function tearDown()
+    {
+        $this->validator = null;
+    }
+
     public function testNullIsValid()
     {
         $this->assertTrue($this->validator->isValid(null, new DateTime()));
@@ -31,6 +36,11 @@ class DateTimeValidatorTest extends \PHPUnit_Framework_TestCase
     public function testEmptyStringIsValid()
     {
         $this->assertTrue($this->validator->isValid('', new DateTime()));
+    }
+
+    public function testDateTimeClassIsValid()
+    {
+        $this->assertTrue($this->validator->isValid(new \DateTime(), new DateTime()));
     }
 
     public function testExpectsStringCompatibleType()

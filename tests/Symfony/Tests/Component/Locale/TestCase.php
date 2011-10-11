@@ -40,9 +40,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
     protected function skipIfICUVersionIsTooOld()
     {
         if ($this->isLowerThanIcuVersion('4.0')) {
-            $this->markTestSkipped(
-              'Please upgrade ICU version to 4+'
-            );
+            $this->markTestSkipped('Please upgrade ICU version to 4+');
         }
     }
 
@@ -77,8 +75,14 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
             throw new \RuntimeException('The intl extension is not available');
         }
 
+        if (defined('INTL_ICU_VERSION')) {
+            return INTL_ICU_VERSION;
+        }
+
+        $reflector = new \ReflectionExtension('intl');
+
         ob_start();
-        phpinfo(INFO_MODULES);
+        $reflector->info();
         $output = ob_get_clean();
 
         preg_match('/^ICU version => (.*)$/m', $output, $matches);

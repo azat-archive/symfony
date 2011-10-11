@@ -49,13 +49,14 @@ class ConfigCache
     /**
      * Checks if the cache is still fresh.
      *
-     * This method always returns true is debug is on and the cache file exists.
+     * This method always returns true when debug is off and the
+     * cache file exists.
      *
      * @return Boolean true if the cache is fresh, false otherwise
      */
     public function isFresh()
     {
-        if (!file_exists($this->file)) {
+        if (!is_file($this->file)) {
             return false;
         }
 
@@ -64,7 +65,7 @@ class ConfigCache
         }
 
         $metadata = $this->file.'.meta';
-        if (!file_exists($metadata)) {
+        if (!is_file($metadata)) {
             return false;
         }
 

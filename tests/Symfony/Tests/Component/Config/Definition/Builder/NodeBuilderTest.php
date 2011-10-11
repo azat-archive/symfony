@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Symfony framework.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
 namespace Symfony\Tests\Component\Config\Definition\Builder;
 
 use Symfony\Component\Config\Definition\Builder\NodeBuilder as BaseNodeBuilder;
@@ -30,7 +39,7 @@ class NodeBuilderTest extends \PHPUnit_Framework_TestCase
     public function testAddingANewNodeType()
     {
         $class = __NAMESPACE__.'\\SomeNodeDefinition';
-        
+
         $builder = new BaseNodeBuilder();
         $node = $builder
             ->setNodeClass('newtype', $class)
@@ -66,7 +75,7 @@ class NodeBuilderTest extends \PHPUnit_Framework_TestCase
         $node2 = $builder->node('', 'custom');
 
         $this->assertEquals(get_class($node1), get_class($node2));
-    }    
+    }
 }
 
 class SomeNodeDefinition extends BaseVariableNodeDefinition

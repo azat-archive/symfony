@@ -25,6 +25,13 @@ class TranslationExtensionTest extends TestCase
         }
     }
 
+    public function testEscaping()
+    {
+        $output = $this->getTemplate('{% trans %}Percent: %value%%% (%msg%){% endtrans %}')->render(array('value' => 12, 'msg' => 'approx.'));
+
+        $this->assertEquals('Percent: 12% (approx.)', $output);
+    }
+
     /**
      * @dataProvider getTransTests
      */
@@ -47,21 +54,16 @@ class TranslationExtensionTest extends TestCase
     {
         return array(
             // trans tag
-            array('{% trans "Hello" %}', 'Hello'),
-            array('{% trans "Hello %name%" %}', 'Hello Symfony2', array('name' => 'Symfony2')),
-            array('{% trans name %}', 'Symfony2', array('name' => 'Symfony2')),
-            array('{% trans hello with { \'%name%\': \'Symfony2\' } %}', 'Hello Symfony2', array('hello' => 'Hello %name%')),
-            array('{% set vars = { \'%name%\': \'Symfony2\' } %}{% trans hello with vars %}', 'Hello Symfony2', array('hello' => 'Hello %name%')),
-
             array('{% trans %}Hello{% endtrans %}', 'Hello'),
             array('{% trans %}%name%{% endtrans %}', 'Symfony2', array('name' => 'Symfony2')),
 
-            array('{% trans "Hello" from elsewhere %}', 'Hello'),
             array('{% trans from elsewhere %}Hello{% endtrans %}', 'Hello'),
 
             array('{% trans %}Hello %name%{% endtrans %}', 'Hello Symfony2', array('name' => 'Symfony2')),
             array('{% trans with { \'%name%\': \'Symfony2\' } %}Hello %name%{% endtrans %}', 'Hello Symfony2'),
             array('{% set vars = { \'%name%\': \'Symfony2\' } %}{% trans with vars %}Hello %name%{% endtrans %}', 'Hello Symfony2'),
+
+            array('{% trans into "fr"%}Hello{% endtrans %}', 'Hello'),
 
             // transchoice
             array('{% transchoice count from "messages" %}{0} There is no apples|{1} There is one apple|]1,Inf] There is %count% apples{% endtranschoice %}',
@@ -72,12 +74,20 @@ class TranslationExtensionTest extends TestCase
                 'There is 5 apples (Symfony2)', array('count' => 5, 'name' => 'Symfony2')),
             array('{% transchoice count with { \'%name%\': \'Symfony2\' } %}{0} There is no apples|{1} There is one apple|]1,Inf] There is %count% apples (%name%){% endtranschoice %}',
                 'There is 5 apples (Symfony2)', array('count' => 5)),
+            array('{% transchoice count into "fr"%}{0} There is no apples|{1} There is one apple|]1,Inf] There is %count% apples{% endtranschoice %}',
+                'There is no apples', array('count' => 0)),
 
             // trans filter
             array('{{ "Hello"|trans }}', 'Hello'),
             array('{{ name|trans }}', 'Symfony2', array('name' => 'Symfony2')),
             array('{{ hello|trans({ \'%name%\': \'Symfony2\' }) }}', 'Hello Symfony2', array('hello' => 'Hello %name%')),
             array('{% set vars = { \'%name%\': \'Symfony2\' } %}{{ hello|trans(vars) }}', 'Hello Symfony2', array('hello' => 'Hello %name%')),
+            array('{{ "Hello"|trans({}, "messages", "fr") }}', 'Hello'),
+
+            // transchoice filter
+            array('{{ "{0} There is no apples|{1} There is one apple|]1,Inf] There is %count% apples"|transchoice(count) }}', 'There is 5 apples', array('count' => 5)),
+            array('{{ text|transchoice(5, {\'%name%\': \'Symfony2\'}) }}', 'There is 5 apples (Symfony2)', array('text' => '{0} There is no apples|{1} There is one apple|]1,Inf] There is %count% apples (%name%)')),
+            array('{{ "{0} There is no apples|{1} There is one apple|]1,Inf] There is %count% apples"|transchoice(count, {}, "messages", "fr") }}', 'There is 5 apples', array('count' => 5)),
         );
     }
 

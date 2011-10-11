@@ -13,7 +13,7 @@ body
 }
 body
 {
-    font: 1em "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;;
+    font: 1em "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
     text-align:left;
 }
 
@@ -100,10 +100,16 @@ fieldset
     border:none;
 }
 
+abbr
+{
+    border-bottom: 1px dotted #000;
+    cursor: help;
+}
+
 .clear
 {
     clear:both;
-    height:0px;
+    height:0;
     font-size:0;
     line-height:0;
 }
@@ -186,7 +192,7 @@ fieldset
 {
     display: block;
     position: absolute;
-    left: 0px;
+    left: 0;
     top: 12px;
     width: 60px;
     text-align: center;
@@ -235,7 +241,7 @@ fieldset
 
 #collector_content table td
 {
-    background-color: white;
+    background-color: #fff;
 }
 
 h1
@@ -272,7 +278,7 @@ li
     -webkit-border-radius:6px;
     border-radius:6px;
     padding:4px;
-    color:white;
+    color:#fff;
     margin-right:2px;
     font-size: 11px;
 }
@@ -288,11 +294,7 @@ li
 {
     color:#313131;
     font-size:12px;
-}
-
-#resume .date
-{
-    display:block;
+    padding-bottom: 0;
 }
 
 table th.value
@@ -311,7 +313,7 @@ table th.value
 #content #main
 {
     padding: 0;
-    background-color:#FFFFFF;
+    background-color:#FFF;
     border:1px solid #dfdfdf;
 }
 
@@ -333,6 +335,10 @@ table th.value
 
 .sf-exceptionreset .block_exception_detected .illustration_exception {
     display: none;
+}
+
+ul.alt {
+    margin:10px 0 30px;
 }
 
 ul.alt li {
@@ -374,7 +380,7 @@ td.main, td.menu {
     margin-right:10px;
     font-size:12px;
     border:1px solid #dadada;
-    background:#FFFFFF url(../images/profiler/input_bg.gif) repeat-x left top;
+    background:#FFF url(../images/profiler/input_bg.gif) repeat-x left top;
     padding:5px 6px;
     color:#565656;
 }
@@ -388,18 +394,15 @@ td.main, td.menu {
 {
     -webkit-appearance: button-bevel;
     float: none;
-    display: block;
     padding: 0;
     margin: 0;
-    border: 0px solid #000000;
+    border: 0;
     text-decoration: none;
     cursor: pointer;
-    background-color: transparent;
     white-space: nowrap;
     display: inline-block;
     text-align: center;
     vertical-align: middle;
-    border: 0;
     background: none;
 }
 
@@ -411,7 +414,7 @@ td.main, td.menu {
 .search button span span,
 .search button span span span
 {
-  position: static;
+    position: static;
 }
 
 .search button span
@@ -433,7 +436,7 @@ td.main, td.menu {
 
 .search button span span span
 {
-    padding: 0px 7px;
+    padding: 0 7px;
     font: bold 11px Arial, Helvetica, sans-serif;
     color: #6b6b6b;
     line-height: 28px;
@@ -445,7 +448,7 @@ td.main, td.menu {
     padding-top: 15px;
     float: none;
     background: none repeat scroll 0 0 #f6f6f6;
-    color: #333333;
+    color: #333;
     margin: 20px 0;
     border: 1px solid #dfdfdf;
     border-left: none;

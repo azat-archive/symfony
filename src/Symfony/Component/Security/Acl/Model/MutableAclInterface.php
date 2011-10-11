@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\Security\Acl\Model;
 
-use Doctrine\Common\NotifyPropertyChanged;
-
 /**
  * This interface adds mutators for the AclInterface.
  *
@@ -21,13 +19,12 @@ use Doctrine\Common\NotifyPropertyChanged;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
+interface MutableAclInterface extends AclInterface
 {
     /**
      * Deletes a class-based ACE
      *
      * @param integer $index
-     * @return void
      */
     function deleteClassAce($index);
 
@@ -36,7 +33,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      *
      * @param integer $index
      * @param string $field
-     * @return void
      */
     function deleteClassFieldAce($index, $field);
 
@@ -44,7 +40,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * Deletes an object-based ACE
      *
      * @param integer $index
-     * @return void
      */
     function deleteObjectAce($index);
 
@@ -53,7 +48,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      *
      * @param integer $index
      * @param string $field
-     * @return void
      */
     function deleteObjectFieldAce($index, $field);
 
@@ -68,24 +62,22 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * Inserts a class-based ACE
      *
      * @param SecurityIdentityInterface $sid
-     * @param integer $mask
-     * @param integer $index
-     * @param Boolean $granting
-     * @param string $strategy
-     * @return void
+     * @param integer                   $mask
+     * @param integer                   $index
+     * @param Boolean                   $granting
+     * @param string                    $strategy
      */
     function insertClassAce(SecurityIdentityInterface $sid, $mask, $index = 0, $granting = true, $strategy = null);
 
     /**
      * Inserts a class-field-based ACE
      *
-     * @param string $field
+     * @param string                    $field
      * @param SecurityIdentityInterface $sid
-     * @param integer $mask
-     * @param integer $index
-     * @param Boolean $granting
-     * @param string $strategy
-     * @return void
+     * @param integer                   $mask
+     * @param integer                   $index
+     * @param Boolean                   $granting
+     * @param string                    $strategy
      */
     function insertClassFieldAce($field, SecurityIdentityInterface $sid, $mask, $index = 0, $granting = true, $strategy = null);
 
@@ -93,24 +85,22 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * Inserts an object-based ACE
      *
      * @param SecurityIdentityInterface $sid
-     * @param integer $mask
-     * @param integer $index
-     * @param Boolean $granting
-     * @param string $strategy
-     * @return void
+     * @param integer                   $mask
+     * @param integer                   $index
+     * @param Boolean                   $granting
+     * @param string                    $strategy
      */
     function insertObjectAce(SecurityIdentityInterface $sid, $mask, $index = 0, $granting = true, $strategy = null);
 
     /**
      * Inserts an object-field-based ACE
      *
-     * @param string $field
+     * @param string                    $field
      * @param SecurityIdentityInterface $sid
-     * @param integer $mask
-     * @param integer $index
-     * @param Boolean $granting
-     * @param string $strategy
-     * @return void
+     * @param integer                   $mask
+     * @param integer                   $index
+     * @param Boolean                   $granting
+     * @param string                    $strategy
      */
     function insertObjectFieldAce($field, SecurityIdentityInterface $sid, $mask, $index = 0, $granting = true, $strategy = null);
 
@@ -118,7 +108,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * Sets whether entries are inherited
      *
      * @param Boolean $boolean
-     * @return void
      */
     function setEntriesInheriting($boolean);
 
@@ -126,7 +115,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * Sets the parent ACL
      *
      * @param AclInterface $acl
-     * @return void
      */
     function setParentAcl(AclInterface $acl);
 
@@ -136,7 +124,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * @param integer $index
      * @param integer $mask
      * @param string $strategy if null the strategy should not be changed
-     * @return void
      */
     function updateClassAce($index, $mask, $strategy = null);
 
@@ -147,7 +134,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * @param string $field
      * @param integer $mask
      * @param string $strategy if null the strategy should not be changed
-     * @return void
      */
     function updateClassFieldAce($index, $field, $mask, $strategy = null);
 
@@ -157,7 +143,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * @param integer $index
      * @param integer $mask
      * @param string $strategy if null the strategy should not be changed
-     * @return void
      */
     function updateObjectAce($index, $mask, $strategy = null);
 
@@ -168,7 +153,6 @@ interface MutableAclInterface extends AclInterface, NotifyPropertyChanged
      * @param string $field
      * @param integer $mask
      * @param string $strategy if null the strategy should not be changed
-     * @return void
      */
     function updateObjectFieldAce($index, $field, $mask, $strategy = null);
 }

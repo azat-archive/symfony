@@ -15,7 +15,6 @@ use Symfony\Component\Translation\Translator as BaseTranslator;
 use Symfony\Component\Translation\Loader\LoaderInterface;
 use Symfony\Component\Translation\MessageSelector;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Session;
 use Symfony\Component\Config\ConfigCache;
 
 /**
@@ -27,7 +26,7 @@ class Translator extends BaseTranslator
 {
     protected $container;
     protected $options;
-    protected $session;
+    protected $loaderIds;
 
     /**
      * Constructor.
@@ -39,27 +38,31 @@ class Translator extends BaseTranslator
      *
      * @param ContainerInterface $container A ContainerInterface instance
      * @param MessageSelector    $selector  The message selector for pluralization
+     * @param array              $loaderIds An array of loader Ids
      * @param array              $options   An array of options
-     * @param Session            $session   A Session instance
      */
-    public function __construct(ContainerInterface $container, MessageSelector $selector, array $options = array(), Session $session = null)
+    public function __construct(ContainerInterface $container, MessageSelector $selector, $loaderIds = array(), array $options = array())
     {
-        parent::__construct(null, $selector);
-
-        $this->session = $session;
         $this->container = $container;
+        $this->loaderIds = $loaderIds;
 
         $this->options = array(
             'cache_dir' => null,
             'debug'     => false,
+            'charset'   => null,
         );
 
         // check option names
         if ($diff = array_diff(array_keys($options), array_keys($this->options))) {
-            throw new \InvalidArgumentException(sprintf('The Router does not support the following options: \'%s\'.', implode('\', \'', $diff)));
+            throw new \InvalidArgumentException(sprintf('The Translator does not support the following options: \'%s\'.', implode('\', \'', $diff)));
         }
 
         $this->options = array_merge($this->options, $options);
+
+        if ($this->options['charset'] === 'UTF-8') {
+            $this->options['charset'] = null;
+        }
+        parent::__construct(null, $selector, $this->options['charset']);
     }
 
     /**
@@ -67,8 +70,8 @@ class Translator extends BaseTranslator
      */
     public function getLocale()
     {
-        if (null === $this->locale && null !== $this->session) {
-            $this->locale = $this->session->getLocale();
+        if (null === $this->locale && $this->container->has('request')) {
+            $this->locale = $this->container->get('request')->getLocale();
         }
 
         return $this->locale;
@@ -95,10 +98,40 @@ class Translator extends BaseTranslator
 
             parent::loadCatalogue($locale);
 
-            $content = sprintf(
-                "<?php use Symfony\Component\Translation\MessageCatalogue; return new MessageCatalogue('%s', %s);",
+            $fallbackContent = '';
+            $current = '';
+            foreach ($this->computeFallbackLocales($locale) as $fallback) {
+                $fallbackContent .= sprintf(<<<EOF
+\$catalogue%s = new MessageCatalogue('%s', %s);
+\$catalogue%s->addFallbackCatalogue(\$catalogue%s);
+
+
+EOF
+                    ,
+                    ucfirst($fallback),
+                    $fallback,
+                    var_export($this->catalogues[$fallback]->all(), true),
+                    ucfirst($current),
+                    ucfirst($fallback)
+                );
+                $current = $fallback;
+            }
+
+            $content = sprintf(<<<EOF
+<?php
+
+use Symfony\Component\Translation\MessageCatalogue;
+
+\$catalogue = new MessageCatalogue('%s', %s);
+
+%s
+return \$catalogue;
+
+EOF
+                ,
                 $locale,
-                var_export($this->catalogues[$locale]->all(), true)
+                var_export($this->catalogues[$locale]->all(), true),
+                $fallbackContent
             );
 
             $cache->write($content, $this->catalogues[$locale]->getResources());
@@ -111,12 +144,8 @@ class Translator extends BaseTranslator
 
     protected function initialize()
     {
-        foreach ($this->container->getParameter('translation.loaders') as $id => $alias) {
+        foreach ($this->loaderIds as $id => $alias) {
             $this->addLoader($alias, $this->container->get($id));
-        }
-
-        foreach ($this->container->getParameter('translation.resources') as $resource) {
-            $this->addResource($resource[0], $resource[1], $resource[2], $resource[3]);
         }
     }
 }

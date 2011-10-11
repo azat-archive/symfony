@@ -308,4 +308,26 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             $this->assertInstanceof('RuntimeException', $e, '->request() throws a \RuntimeException if the script has an error');
         }
     }
+
+    public function testGetServerParameter()
+    {
+        $client = new TestClient();
+        $this->assertEquals('localhost', $client->getServerParameter('HTTP_HOST'));
+        $this->assertEquals('Symfony2 BrowserKit', $client->getServerParameter('HTTP_USER_AGENT'));
+        $this->assertEquals('testvalue', $client->getServerParameter('testkey', 'testvalue'));
+    }
+
+    public function testSetServerParameter()
+    {
+        $client = new TestClient();
+
+        $this->assertEquals('localhost', $client->getServerParameter('HTTP_HOST'));
+        $this->assertEquals('Symfony2 BrowserKit', $client->getServerParameter('HTTP_USER_AGENT'));
+
+        $client->setServerParameter('HTTP_HOST', 'testhost');
+        $this->assertEquals('testhost', $client->getServerParameter('HTTP_HOST'));
+
+        $client->setServerParameter('HTTP_USER_AGENT', 'testua');
+        $this->assertEquals('testua', $client->getServerParameter('HTTP_USER_AGENT'));
+    }
 }

@@ -11,24 +11,82 @@
 
 namespace Symfony\Tests\Component\HttpFoundation;
 
+use Symfony\Component\HttpFoundation\SessionStorage\ArraySessionStorage;
+
+use Symfony\Component\HttpFoundation\Session;
+
 use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\Request;
 
 class RequestMatcherTest extends \PHPUnit_Framework_TestCase
 {
-    public function testIp()
+    /**
+     * @dataProvider testIpv4Provider
+     */
+    public function testIpv4($matches, $remoteAddr, $cidr)
     {
+        $request = Request::create('', 'get', array(), array(), array(), array('REMOTE_ADDR' => $remoteAddr));
+
         $matcher = new RequestMatcher();
+        $matcher->matchIp($cidr);
 
-        $matcher->matchIp('192.168.1.1/1');
-        $request = Request::create('', 'get', array(), array(), array(), array('REMOTE_ADDR' => '192.168.1.1'));
-        $this->assertTrue($matcher->matches($request));
+        $this->assertEquals($matches, $matcher->matches($request));
+    }
 
-        $matcher->matchIp('192.168.1.0/24');
-        $this->assertTrue($matcher->matches($request));
+    public function testIpv4Provider()
+    {
+        return array(
+            array(true, '192.168.1.1', '192.168.1.1'),
+            array(true, '192.168.1.1', '192.168.1.1/1'),
+            array(true, '192.168.1.1', '192.168.1.0/24'),
+            array(false, '192.168.1.1', '1.2.3.4/1'),
+            array(false, '192.168.1.1', '192.168.1/33'),
+        );
+    }
 
-        $matcher->matchIp('1.2.3.4/1');
-        $this->assertFalse($matcher->matches($request));
+    /**
+     * @dataProvider testIpv6Provider
+     */
+    public function testIpv6($matches, $remoteAddr, $cidr)
+    {
+        if (!defined('AF_INET6')) {
+            $this->markTestSkipped('Only works when PHP is compiled without the option "disable-ipv6".');
+        }
+
+        $request = Request::create('', 'get', array(), array(), array(), array('REMOTE_ADDR' => $remoteAddr));
+
+        $matcher = new RequestMatcher();
+        $matcher->matchIp($cidr);
+
+        $this->assertEquals($matches, $matcher->matches($request));
+    }
+
+    public function testIpv6Provider()
+    {
+        return array(
+            array(true, '2a01:198:603:0:396e:4789:8e99:890f', '2a01:198:603:0::/65'),
+            array(false, '2a00:198:603:0:396e:4789:8e99:890f', '2a01:198:603:0::/65'),
+        );
+    }
+
+    public function testAnIpv6WithOptionDisabledIpv6()
+    {
+        if (defined('AF_INET6')) {
+            $this->markTestSkipped('Only works when PHP is compiled with the option "disable-ipv6".');
+        }
+
+        $request = Request::create('', 'get', array(), array(), array(), array('REMOTE_ADDR' => '2a01:198:603:0:396e:4789:8e99:890f'));
+
+        $matcher = new RequestMatcher();
+        $matcher->matchIp('2a01:198:603:0::/65');
+
+        try {
+            $matcher->matches($request);
+
+            $this->fail('An expected RuntimeException has not been raised.');
+        } catch (\Exception $e) {
+            $this->assertInstanceOf('\RuntimeException', $e);
+        }
     }
 
     public function testMethod()
@@ -84,6 +142,16 @@ class RequestMatcherTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($matcher->matches($request));
     }
 
+    public function testPathWithLocaleIsNotSupported()
+    {
+        $matcher = new RequestMatcher();
+        $request = Request::create('/en/login');
+        $request->setLocale('en');
+
+        $matcher->matchPath('^/{_locale}/login$');
+        $this->assertFalse($matcher->matches($request));
+    }
+
     public function testAttributes()
     {
         $matcher = new RequestMatcher();
@@ -104,4 +172,3 @@ class RequestMatcherTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($matcher->matches($request));
     }
 }
-

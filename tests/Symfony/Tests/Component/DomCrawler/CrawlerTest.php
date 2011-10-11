@@ -62,6 +62,39 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $crawler->addHtmlContent('<html><div class="foo"></html>', 'UTF-8');
 
         $this->assertEquals('foo', $crawler->filter('div')->attr('class'), '->addHtmlContent() adds nodes from an HTML string');
+
+        $crawler->addHtmlContent('<html><head><base href="http://symfony.com"></head><a href="/contact"></a></html>', 'UTF-8');
+
+        $this->assertEquals('http://symfony.com', $crawler->filter('base')->attr('href'), '->addHtmlContent() adds nodes from an HTML string');
+        $this->assertEquals('http://symfony.com/contact', $crawler->filter('a')->link()->getUri(), '->addHtmlContent() adds nodes from an HTML string');
+    }
+
+    /**
+     * @covers Symfony\Component\DomCrawler\Crawler::addHtmlContent
+     */
+    public function testAddHtmlContentWithErrors()
+    {
+        libxml_use_internal_errors(true);
+
+        $crawler = new Crawler();
+        $crawler->addHtmlContent(<<<EOF
+<!DOCTYPE html>
+<html>
+    <head>
+    </head>
+    <body>
+        <nav><a href="#"><a href="#"></nav>
+    </body>
+</html>
+EOF
+        , 'UTF-8');
+
+        $errors = libxml_get_errors();
+        $this->assertEquals(1, count($errors));
+        $this->assertEquals("Tag nav invalid\n", $errors[0]->message);
+
+        libxml_clear_errors();
+        libxml_use_internal_errors(false);
     }
 
     /**
@@ -76,6 +109,32 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @covers Symfony\Component\DomCrawler\Crawler::addXmlContent
+     */
+    public function testAddXmlContentWithErrors()
+    {
+        libxml_use_internal_errors(true);
+
+        $crawler = new Crawler();
+        $crawler->addXmlContent(<<<EOF
+<!DOCTYPE html>
+<html>
+    <head>
+    </head>
+    <body>
+        <nav><a href="#"><a href="#"></nav>
+    </body>
+</html>
+EOF
+        , 'UTF-8');
+
+        $this->assertTrue(count(libxml_get_errors()) > 1);
+
+        libxml_clear_errors();
+        libxml_use_internal_errors(false);
+    }
+
+    /**
      * @covers Symfony\Component\DomCrawler\Crawler::addContent
      */
     public function testAddContent()
@@ -83,6 +142,10 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $crawler = new Crawler();
         $crawler->addContent('<html><div class="foo"></html>', 'text/html; charset=UTF-8');
         $this->assertEquals('foo', $crawler->filter('div')->attr('class'), '->addContent() adds nodes from an HTML string');
+
+        $crawler = new Crawler();
+        $crawler->addContent('<html><div class="foo"></html>', 'text/html; charset=UTF-8; dir=RTL');
+        $this->assertEquals('foo', $crawler->filter('div')->attr('class'), '->addContent() adds nodes from an HTML string with extended content type');
 
         $crawler = new Crawler();
         $crawler->addContent('<html><div class="foo"></html>');
@@ -287,17 +350,10 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     public function testLink()
     {
-        $crawler = $this->createTestCrawler()->selectLink('Foo');
+        $crawler = $this->createTestCrawler('http://example.com/bar/')->selectLink('Foo');
         $this->assertInstanceOf('Symfony\\Component\\DomCrawler\\Link', $crawler->link(), '->link() returns a Link instance');
 
-        $this->assertEquals('/foo', $crawler->link()->getUri(), '->link() returns a Link instance');
-        $this->assertEquals('post', $crawler->link('post')->getMethod(), '->link() takes a method as its argument');
-
-        $crawler = $this->createTestCrawler('http://example.com/bar/')->selectLink('Foo');
-        $this->assertEquals('http://example.com/bar/foo', $crawler->link()->getUri(), '->link() returns a Link instance');
-
-        $crawler = $this->createTestCrawler('http://example.com/bar')->selectLink('Foo');
-        $this->assertEquals('http://example.com/foo', $crawler->link()->getUri(), '->link() returns a Link instance');
+        $this->assertEquals('POST', $crawler->link('post')->getMethod(), '->link() takes a method as its argument');
 
         $crawler = $this->createTestCrawler('http://example.com/bar')->selectLink('GetLink');
         $this->assertEquals('http://example.com/bar?get=param', $crawler->link()->getUri(), '->link() returns a Link instance');
@@ -312,7 +368,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     public function testLinks()
     {
-        $crawler = $this->createTestCrawler()->selectLink('Foo');
+        $crawler = $this->createTestCrawler('http://example.com/bar/')->selectLink('Foo');
         $this->assertInternalType('array', $crawler->links(), '->links() returns an array');
 
         $this->assertEquals(4, count($crawler->links()), '->links() returns an array');
@@ -324,17 +380,10 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     public function testForm()
     {
-        $crawler = $this->createTestCrawler()->selectButton('FooValue');
+        $crawler = $this->createTestCrawler('http://example.com/bar/')->selectButton('FooValue');
         $this->assertInstanceOf('Symfony\\Component\\DomCrawler\\Form', $crawler->form(), '->form() returns a Form instance');
 
-        $this->assertEquals('/foo?FooName=FooValue', $crawler->form()->getUri(), '->form() returns a Form instance');
         $this->assertEquals(array('FooName' => 'FooBar'), $crawler->form(array('FooName' => 'FooBar'))->getValues(), '->form() takes an array of values to submit as its first argument');
-
-        $crawler = $this->createTestCrawler('http://example.com/bar/')->selectButton('FooValue');
-        $this->assertEquals('http://example.com/bar/foo?FooName=FooValue', $crawler->form()->getUri(), '->form() returns a Form instance');
-
-        $crawler = $this->createTestCrawler('http://example.com/bar')->selectButton('FooValue');
-        $this->assertEquals('http://example.com/foo?FooName=FooValue', $crawler->form()->getUri(), '->form() returns a Form instance');
 
         try {
             $this->createTestCrawler()->filter('ol')->form();

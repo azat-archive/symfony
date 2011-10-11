@@ -158,12 +158,18 @@ class StubNumberFormatterTest extends LocaleTestCase
             array(-100, 'JPY', '(¥100)'),
             array(1000.12, 'JPY', '¥1,000'),
 
+            array(100, 'EUR', '€100.00'),
+            array(-100, 'EUR', '(€100.00)'),
+            array(1000.12, 'EUR', '€1,000.12'),
+
             // Rounding checks
             array(1000.121, 'BRL', 'R$1,000.12'),
             array(1000.123, 'BRL', 'R$1,000.12'),
             array(1000.125, 'BRL', 'R$1,000.12'),
             array(1000.127, 'BRL', 'R$1,000.13'),
             array(1000.129, 'BRL', 'R$1,000.13'),
+            array(11.50999, 'BRL', 'R$11.51'),
+            array(11.9999464, 'BRL', 'R$12.00')
         );
     }
 
@@ -200,13 +206,19 @@ class StubNumberFormatterTest extends LocaleTestCase
             array(100, 'CHF', $chf, '%s100.00'),
             array(-100, 'CHF', $chf, '(%s100.00)'),
             array(1000.12, 'CHF', $chf, '%s1,000.10'),
+            array('1000.12', 'CHF', $chf, '%s1,000.10'),
 
             // Rounding checks
             array(1000.121, 'CHF', $chf, '%s1,000.10'),
             array(1000.123, 'CHF', $chf, '%s1,000.10'),
             array(1000.125, 'CHF', $chf, '%s1,000.10'),
             array(1000.127, 'CHF', $chf, '%s1,000.15'),
-            array(1000.129, 'CHF', $chf, '%s1,000.15')
+            array(1000.129, 'CHF', $chf, '%s1,000.15'),
+
+            array(1200000.00, 'CHF', $chf, '%s1,200,000.00'),
+            array(1200000.1, 'CHF', $chf, '%s1,200,000.10'),
+            array(1200000.10, 'CHF', $chf, '%s1,200,000.10'),
+            array(1200000.101, 'CHF', $chf, '%s1,200,000.10')
         );
     }
 
@@ -356,6 +368,12 @@ class StubNumberFormatterTest extends LocaleTestCase
         $formatter->format(1, StubNumberFormatter::TYPE_CURRENCY);
     }
 
+    public function testFormatTypeCurrencyReturnStub()
+    {
+        $formatter = $this->getStubFormatterWithDecimalStyle();
+        $this->assertFalse(@$formatter->format(1, StubNumberFormatter::TYPE_CURRENCY));
+    }
+
     /**
      * @dataProvider formatTypeCurrencyProvider
      * @expectedException PHPUnit_Framework_Error_Warning
@@ -384,7 +402,7 @@ class StubNumberFormatterTest extends LocaleTestCase
     {
         $formatter = $this->getStubFormatterWithDecimalStyle();
 
-        if (!is_null($fractionDigits)) {
+        if (null !== $fractionDigits) {
             $attributeRet = $formatter->setAttribute(StubNumberFormatter::FRACTION_DIGITS, $fractionDigits);
         }
 
@@ -405,7 +423,7 @@ class StubNumberFormatterTest extends LocaleTestCase
         $this->skipIfIntlExtensionIsNotLoaded();
         $formatter = $this->getIntlFormatterWithDecimalStyle();
 
-        if (!is_null($fractionDigits)) {
+        if (null !== $fractionDigits) {
             $attributeRet = $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, $fractionDigits);
         }
 
@@ -437,7 +455,7 @@ class StubNumberFormatterTest extends LocaleTestCase
     {
         $formatter = $this->getStubFormatterWithDecimalStyle();
 
-        if (!is_null($groupingUsed)) {
+        if (null !== $groupingUsed) {
             $attributeRet = $formatter->setAttribute(StubNumberFormatter::GROUPING_USED, $groupingUsed);
         }
 
@@ -458,7 +476,7 @@ class StubNumberFormatterTest extends LocaleTestCase
         $this->skipIfIntlExtensionIsNotLoaded();
         $formatter = $this->getIntlFormatterWithDecimalStyle();
 
-        if (!is_null($groupingUsed)) {
+        if (null !== $groupingUsed) {
             $attributeRet = $formatter->setAttribute(\NumberFormatter::GROUPING_USED, $groupingUsed);
         }
 
@@ -963,6 +981,7 @@ class StubNumberFormatterTest extends LocaleTestCase
 
         $formatter = new \NumberFormatter('en', \NumberFormatter::CURRENCY);
         $formatter->setSymbol(\NumberFormatter::CURRENCY_SYMBOL, 'SFD');
+
         return $formatter;
     }
 }

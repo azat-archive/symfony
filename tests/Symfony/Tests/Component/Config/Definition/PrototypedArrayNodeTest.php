@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Symfony framework.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
 namespace Symfony\Tests\Component\Config\Definition;
 
 use Symfony\Component\Config\Definition\PrototypedArrayNode;
@@ -8,7 +17,7 @@ use Symfony\Component\Config\Definition\ScalarNode;
 
 class PrototypedArrayNodeTest extends \PHPUnit_Framework_TestCase
 {
- 
+
     public function testGetDefaultValueReturnsAnEmptyArrayForPrototypes()
     {
         $node = new PrototypedArrayNode('root');

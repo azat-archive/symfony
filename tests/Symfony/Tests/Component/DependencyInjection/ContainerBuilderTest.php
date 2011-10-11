@@ -107,8 +107,8 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
         $builder->register('baz', 'stdClass')->setArguments(array(new Reference('baz')));
         try {
             @$builder->get('baz');
-            $this->fail('->get() throws a CircularReferenceException if the service has a circular reference to itself');
-        } catch (\Symfony\Component\DependencyInjection\Exception\CircularReferenceException $e) {
+            $this->fail('->get() throws a ServiceCircularReferenceException if the service has a circular reference to itself');
+        } catch (\Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException $e) {
             $this->assertEquals('Circular reference detected for service "baz", path: "baz".', $e->getMessage(), '->get() throws a LogicException if the service has a circular reference to itself');
         }
 
@@ -430,6 +430,8 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
             }
         }
         $this->assertEquals(array($a, $b), $resources, '->getResources() returns an array of resources read for the current configuration');
+        $this->assertSame($container, $container->setResources(array()));
+        $this->assertEquals(array(), $container->getResources());
     }
 
     /**
@@ -470,28 +472,21 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
         $container->compile();
     }
 
-    /**
-     * @covers Symfony\Component\DependencyInjection\ContainerBuilder::addInterfaceInjector
-     * @covers Symfony\Component\DependencyInjection\ContainerBuilder::addInterfaceInjectors
-     * @covers Symfony\Component\DependencyInjection\ContainerBuilder::getInterfaceInjectors
-     * @covers Symfony\Component\DependencyInjection\ContainerBuilder::hasInterfaceInjectorForClass
-     * @covers Symfony\Component\DependencyInjection\ContainerBuilder::setDefinition
-     */
-    public function testInterfaceInjection()
+    public function testPrivateServiceUser()
     {
-        $definition = new Definition('Symfony\Tests\Component\DependencyInjection\FooClass');
+        $fooDefinition     = new Definition('BarClass');
+        $fooUserDefinition = new Definition('BarUserClass', array(new Reference('bar')));
+        $container         = new ContainerBuilder();
 
-        $injectors[] = $this->getMockInterfaceInjector('Symfony\Tests\Component\DependencyInjection\FooClass', 1);
-        $injectors[] = $this->getMockInterfaceInjector('Symfony\Tests\Component\DependencyInjection\FooClass', 0);
+        $fooDefinition->setPublic(false);
 
-        $container = new ContainerBuilder();
-        $container->addInterfaceInjectors($injectors);
-        $this->assertEquals(1, count($container->getInterfaceInjectors('Symfony\Tests\Component\DependencyInjection\FooClass')));
-        $this->assertTrue($container->hasInterfaceInjectorForClass('Symfony\Tests\Component\DependencyInjection\FooClass'));
-        $this->assertFalse($container->hasInterfaceInjectorForClass('\Foo'));
+        $container->addDefinitions(array(
+            'bar'       => $fooDefinition,
+            'bar_user'  => $fooUserDefinition
+        ));
 
-        $container->setDefinition('test', $definition);
-        $test = $container->get('test');
+        $container->compile();
+        $this->assertInstanceOf('BarClass', $container->get('bar_user')->bar);
     }
 
     /**
@@ -512,20 +507,6 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
         $container = new ContainerBuilder();
         $container->compile();
         $container->setDefinition('a', new Definition());
-    }
-
-    /**
-     * @param string $class
-     * @param int $methodCallsCount
-     * @return Symfony\Component\DependencyInjection\InterfaceInjector
-     */
-    private function getMockInterfaceInjector($class, $methodCallsCount)
-    {
-        $injector = $this->getMock('Symfony\Component\DependencyInjection\InterfaceInjector', array('processDefinition'), array('Symfony\Tests\Component\DependencyInjection\FooClass'), '', true, false);
-        $injector->expects($this->exactly($methodCallsCount))
-            ->method('processDefinition')
-        ;
-        return $injector;
     }
 }
 

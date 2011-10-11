@@ -1,56 +1,48 @@
 <?php
 
+/*
+ * This file is part of the Symfony framework.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
 namespace Symfony\Bundle\TwigBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * TwigExtension configuration structure.
  *
  * @author Jeremy Mikola <jmikola@gmail.com>
  */
-class Configuration
+class Configuration implements ConfigurationInterface
 {
     /**
-     * Generates the configuration tree.
+     * Generates the configuration tree builder.
      *
-     * @return \Symfony\Component\Config\Definition\ArrayNode The config tree
+     * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder The tree builder
      */
-    public function getConfigTree()
+    public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('twig');
 
         $rootNode
             ->children()
-                ->scalarNode('cache_warmer')->end()
-            ->end();
+                ->scalarNode('exception_controller')->defaultValue('Symfony\\Bundle\\TwigBundle\\Controller\\ExceptionController::showAction')->end()
+            ->end()
         ;
 
-        $this->addExtensionsSection($rootNode);
         $this->addFormSection($rootNode);
         $this->addGlobalsSection($rootNode);
         $this->addTwigOptions($rootNode);
 
-        return $treeBuilder->buildTree();
-    }
-
-    private function addExtensionsSection(ArrayNodeDefinition $rootNode)
-    {
-        $rootNode
-            ->fixXmlConfig('extension')
-            ->children()
-                ->arrayNode('extensions')
-                    ->prototype('scalar')
-                        ->beforeNormalization()
-                            ->ifTrue(function($v) { return is_array($v) && isset($v['id']); })
-                            ->then(function($v){ return $v['id']; })
-                        ->end()
-                    ->end()
-                ->end()
-            ->end()
-        ;
+        return $treeBuilder;
     }
 
     private function addFormSection(ArrayNodeDefinition $rootNode)
@@ -63,11 +55,11 @@ class Configuration
                     ->children()
                         ->arrayNode('resources')
                             ->addDefaultsIfNotSet()
-                            ->defaultValue(array('TwigBundle::form.html.twig'))
+                            ->defaultValue(array('form_div_layout.html.twig'))
                             ->validate()
-                                ->always()
+                                ->ifTrue(function($v) { return !in_array('form_div_layout.html.twig', $v); })
                                 ->then(function($v){
-                                    return array_merge(array('TwigBundle::form.html.twig'), $v);
+                                    return array_merge(array('form_div_layout.html.twig'), $v);
                                 })
                             ->end()
                             ->prototype('scalar')->end()

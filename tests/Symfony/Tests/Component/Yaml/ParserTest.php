@@ -13,21 +13,20 @@ namespace Symfony\Tests\Component\Yaml;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Parser;
-use Symfony\Component\Yaml\ParserException;
+use Symfony\Component\Yaml\Exception\ParseException;
 
 class ParserTest extends \PHPUnit_Framework_TestCase
 {
     protected $parser;
-    protected $path;
-
-    static public function setUpBeforeClass()
-    {
-        Yaml::setSpecVersion('1.1');
-    }
 
     protected function setUp()
     {
         $this->parser = new Parser();
+    }
+
+    protected function tearDown()
+    {
+        $this->parser = null;
     }
 
     /**
@@ -85,7 +84,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
                 $this->fail('YAML files must not contain tabs');
             } catch (\Exception $e) {
                 $this->assertInstanceOf('\Exception', $e, 'YAML files must not contain tabs');
-                $this->assertEquals('A YAML file cannot contain tabs as indentation at line 2 ('.strpbrk($yaml, "\t").').', $e->getMessage(), 'YAML files must not contain tabs');
+                $this->assertEquals('A YAML file cannot contain tabs as indentation at line 2 (near "'.strpbrk($yaml, "\t").'").', $e->getMessage(), 'YAML files must not contain tabs');
             }
         }
     }
@@ -109,6 +108,31 @@ foo: !!php/object:O:30:"Symfony\Tests\Component\Yaml\B":1:{s:1:"b";s:3:"foo";}
 bar: 1
 EOF
         ), $b, '->parse() is able to dump objects');
+    }
+
+    public function testNonUtf8Exception()
+    {
+        if (!function_exists('mb_detect_encoding')) {
+            $this->markTestSkipped('Exceptions for non-utf8 charsets require the mb_detect_encoding() function.');
+
+            return;
+        }
+
+        $yamls = array(
+            iconv("UTF-8", "ISO-8859-1", "foo: 'äöüß'"),
+            iconv("UTF-8", "ISO-8859-15", "euro: '€'"),
+            iconv("UTF-8", "CP1252", "cp1252: '©ÉÇáñ'")
+        );
+
+        foreach ($yamls as $yaml) {
+            try {
+                $this->parser->parse($yaml);
+
+                $this->fail('charsets other than UTF-8 are rejected.');
+            } catch (\Exception $e) {
+                 $this->assertInstanceOf('Symfony\Component\Yaml\Exception\ParseException', $e, 'charsets other than UTF-8 are rejected.');
+            }
+        }
     }
 }
 

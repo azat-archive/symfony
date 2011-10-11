@@ -9,18 +9,25 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraints\Locale;
 use Symfony\Component\Validator\Constraints\LocaleValidator;
 
-class LocaleValidatorTest extends \PHPUnit_Framework_TestCase
+class LocaleValidatorTest extends LocalizedTestCase
 {
     protected $validator;
 
     protected function setUp()
     {
+        parent::setUp();
+
         $this->validator = new LocaleValidator();
+    }
+
+    protected function tearDown()
+    {
+        $this->validator = null;
     }
 
     public function testNullIsValid()

@@ -31,7 +31,7 @@ class CodeHelper extends Helper
      */
     public function __construct($fileLinkFormat, $rootDir)
     {
-        $this->fileLinkFormat = null !== $fileLinkFormat ? $fileLinkFormat : ini_get('xdebug.file_link_format');
+        $this->fileLinkFormat = empty($fileLinkFormat) ? ini_get('xdebug.file_link_format') : $fileLinkFormat;
         $this->rootDir = str_replace('\\', '/', $rootDir).'/';
     }
 
@@ -42,14 +42,14 @@ class CodeHelper extends Helper
      *
      * @return string
      */
-    public function formatArgsAsText($args)
+    public function formatArgsAsText(array $args)
     {
         $result = array();
         foreach ($args as $key => $item) {
             if ('object' === $item[0]) {
                 $formattedValue = sprintf("object(%s)", $item[1]);
             } elseif ('array' === $item[0]) {
-                $formattedValue = sprintf("array(%s)", $this->formatArgsAsText($item[1]));
+                $formattedValue = sprintf("array(%s)", is_array($item[1]) ? $this->formatArgsAsText($item[1]) : $item[1]);
             } elseif ('string'  === $item[0]) {
                 $formattedValue = sprintf("'%s'", $item[1]);
             } elseif ('null' === $item[0]) {
@@ -97,7 +97,7 @@ class CodeHelper extends Helper
      *
      * @return string
      */
-    public function formatArgs($args)
+    public function formatArgs(array $args)
     {
         $result = array();
         foreach ($args as $key => $item) {
@@ -106,7 +106,7 @@ class CodeHelper extends Helper
                 $short = array_pop($parts);
                 $formattedValue = sprintf("<em>object</em>(<abbr title=\"%s\">%s</abbr>)", $item[1], $short);
             } elseif ('array' === $item[0]) {
-                $formattedValue = sprintf("<em>array</em>(%s)", $this->formatArgs($item[1]));
+                $formattedValue = sprintf("<em>array</em>(%s)", is_array($item[1]) ? $this->formatArgs($item[1]) : $item[1]);
             } elseif ('string'  === $item[0]) {
                 $formattedValue = sprintf("'%s'", htmlspecialchars($item[1], ENT_QUOTES, $this->getCharset()));
             } elseif ('null' === $item[0]) {
@@ -169,7 +169,7 @@ class CodeHelper extends Helper
                 $fileStr = sprintf('<abbr title="%s">kernel.root_dir</abbr>/%s', $this->rootDir, $fileStr);
             }
 
-            $text = "$fileStr line $line";
+            $text = "$fileStr at line $line";
         }
 
         if (false !== $link = $this->getFileLink($file, $line)) {
@@ -189,15 +189,19 @@ class CodeHelper extends Helper
      */
     public function getFileLink($file, $line)
     {
-        return $this->fileLinkFormat ? strtr($this->fileLinkFormat, array('%f' => $file, '%l' => $line)) : false;
+        if ($this->fileLinkFormat && is_file($file)) {
+            return strtr($this->fileLinkFormat, array('%f' => $file, '%l' => $line));
+        }
+
+        return false;
     }
 
     public function formatFileFromText($text)
     {
         $that = $this;
 
-        return preg_replace_callback('/in (.*?)(?: on|at)? line (\d+)/', function ($match) use ($that) {
-            return 'in '.$that->formatFile($match[1], $match[2]);
+        return preg_replace_callback('/in (")?(.*?)\1(?: +(?:on|at))? +line (\d+)/', function ($match) use ($that) {
+            return 'in '.$that->formatFile($match[2], $match[3]);
         }, $text);
     }
 
@@ -211,7 +215,7 @@ class CodeHelper extends Helper
         return 'code';
     }
 
-    protected static function fixCodeMarkup($line)
+    static protected function fixCodeMarkup($line)
     {
         // </span> ending tag from previous line
         $opening = strpos($line, '<span');

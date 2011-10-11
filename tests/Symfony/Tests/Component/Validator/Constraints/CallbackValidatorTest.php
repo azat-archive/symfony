@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Tests\Component\Validator;
+namespace Symfony\Tests\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\ExecutionContext;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -67,6 +67,13 @@ class CallbackValidatorTest extends \PHPUnit_Framework_TestCase
 
         $this->validator = new CallbackValidator();
         $this->validator->initialize($this->context);
+    }
+
+    protected function tearDown()
+    {
+        $this->validator = null;
+        $this->walker = null;
+        $this->context = null;
     }
 
     public function testNullIsValid()
@@ -177,5 +184,12 @@ class CallbackValidatorTest extends \PHPUnit_Framework_TestCase
         $object = new CallbackValidatorTest_Object();
 
         $this->validator->isValid($object, new Callback(array(array('foo', 'bar'))));
+    }
+
+    public function testConstraintGetTargets()
+    {
+        $constraint = new Callback(array('foo'));
+
+        $this->assertEquals('class', $constraint->getTargets());
     }
 }

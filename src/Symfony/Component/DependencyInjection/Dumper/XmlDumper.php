@@ -15,13 +15,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\InterfaceInjector;
 
 /**
  * XmlDumper dumps a service container as an XML string.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Martin Hasoň <martin.hason@gmail.com>
+ *
+ * @api
  */
 class XmlDumper extends Dumper
 {
@@ -36,6 +37,8 @@ class XmlDumper extends Dumper
      * @param  array  $options An array of options
      *
      * @return string An xml string representing of the service container
+     *
+     * @api
      */
     public function dump(array $options = array())
     {
@@ -48,7 +51,6 @@ class XmlDumper extends Dumper
 
         $this->addParameters($container);
         $this->addServices($container);
-        $this->addInterfaceInjectors($container);
 
         $this->document->appendChild($container);
         $xml = $this->document->saveXML();
@@ -61,7 +63,6 @@ class XmlDumper extends Dumper
      * Adds parameters.
      *
      * @param DOMElement $parent
-     * @return void
      */
     private function addParameters(\DOMElement $parent)
     {
@@ -84,7 +85,6 @@ class XmlDumper extends Dumper
      *
      * @param array $methodcalls
      * @param DOMElement $parent
-     * @return void
      */
     private function addMethodCalls(array $methodcalls, \DOMElement $parent)
     {
@@ -99,46 +99,11 @@ class XmlDumper extends Dumper
     }
 
     /**
-     * Adds interface injector.
-     *
-     * @param InterfaceInjector $injector
-     * @param DOMElement $parent
-     * @return void
-     */
-    private function addInterfaceInjector(InterfaceInjector $injector, \DOMElement $parent)
-    {
-        $interface = $this->document->createElement('interface');
-        $interface->setAttribute('class', $injector->getClass());
-        $this->addMethodCalls($injector->getMethodCalls(), $interface);
-        $parent->appendChild($interface);
-    }
-
-    /**
-     * Adds interface injectors.
-     *
-     * @param DOMElement $parent
-     * @return void
-     */
-    private function addInterfaceInjectors(\DOMElement $parent)
-    {
-        if (!$this->container->getInterfaceInjectors()) {
-            return;
-        }
-
-        $interfaces = $this->document->createElement('interfaces');
-        foreach ($this->container->getInterfaceInjectors() as $injector) {
-            $this->addInterfaceInjector($injector, $interfaces);
-        }
-        $parent->appendChild($interfaces);
-    }
-
-    /**
      * Adds a service.
      *
      * @param Definition $definition
      * @param string $id
      * @param DOMElement $parent
-     * @return void
      */
     private function addService($definition, $id, \DOMElement $parent)
     {
@@ -157,6 +122,9 @@ class XmlDumper extends Dumper
         }
         if (ContainerInterface::SCOPE_CONTAINER !== $scope = $definition->getScope()) {
             $service->setAttribute('scope', $scope);
+        }
+        if (!$definition->isPublic()) {
+            $service->setAttribute('public', 'false');
         }
 
         foreach ($definition->getTags() as $name => $tags) {
@@ -205,7 +173,6 @@ class XmlDumper extends Dumper
      * @param string $alias
      * @param string $id
      * @param DOMElement $parent
-     * @return void
      */
     private function addServiceAlias($alias, $id, \DOMElement $parent)
     {
@@ -222,7 +189,6 @@ class XmlDumper extends Dumper
      * Adds services.
      *
      * @param DOMElement $parent
-     * @return void
      */
     private function addServices(\DOMElement $parent)
     {
@@ -245,10 +211,10 @@ class XmlDumper extends Dumper
     /**
      * Converts parameters.
      *
-     * @param array $parameters
-     * @param string $type
+     * @param array      $parameters
+     * @param string     $type
      * @param DOMElement $parent
-     * @return void
+     * @param string     $keyAttribute
      */
     private function convertParameters($parameters, $type, \DOMElement $parent, $keyAttribute = 'key')
     {
